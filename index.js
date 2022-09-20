@@ -1,6 +1,8 @@
-/* jshint node: true */
 'use strict';
 
 module.exports = {
-  name: 'ember-mu-registration'
+  name: require('./package').name,
+  isDevelopingAddon() {
+    return process.env.EMBER_ENV === 'development';
+  },
 };
