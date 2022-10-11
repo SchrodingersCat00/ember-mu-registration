@@ -4,49 +4,69 @@ import { action } from '@ember/object';
 import fetch from 'fetch';
 
 export default class MuRegisterComponent extends Component {
-    @tracked loading = '';
-    @tracked name = '';
-    @tracked nickname = '';
-    @tracked password = '';
-    @tracked passwordConfirmation = '';
-    @tracked errorMessage = '';
+  @tracked loading = false;
+  @tracked name = '';
+  @tracked nickname = '';
+  @tracked password = '';
+  @tracked passwordConfirmation = '';
+  @tracked errorMsg = '';
 
-    basePath = '/accounts';  // TODO: make this configurable
+  get showFeedbackMsg() {
+    return this.args.showFeedbackMsg === null ||
+      this.args.showFeedbackMsg === undefined
+      ? true
+      : this.args.showFeedbackMsg;
+  }
 
-    @action
-    async register(event) {
-        event.preventDefault();  // prevents reloading of the page
-        this.errorMessage = '';
-        this.loading = true;
-        const body = JSON.stringify({
-            data: {
-                type: 'accounts',
-                attributes: {
-                    name: this.name,
-                    nickname: this.nickname,
-                    password: this.password,
-                    'password-confirmation': this.passwordConfirmation,
-                },
-            },
-        });
+  basePath = this.args.basePath ?? '/accounts';
 
-        const res = await fetch(this.basePath, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/vnd.api+json',
-            },
-            body,
-        });
+  async sendReq() {
+    const body = JSON.stringify({
+      data: {
+        type: 'accounts',
+        attributes: {
+          name: this.name,
+          nickname: this.nickname,
+          password: this.password,
+          'password-confirmation': this.passwordConfirmation,
+        },
+      },
+    });
 
-        if (res.ok) {
-            this.args.onRegister();
-        } else {
-            this.loading = false;
-            const json = await res.json();
-            const error = json.errors[0].title;
-            console.error('Registration failed: ' + error);
-            this.errorMessage = error;
-        }
+    return await fetch(this.basePath, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/vnd.api+json',
+      },
+      body,
+    });
+  }
+
+  @action
+  async register(event) {
+    event.preventDefault(); // prevents reloading of the page
+    this.args.onRegisterClicked?.();
+    this.errorMsg = '';
+    this.loading = true;
+
+    const res = await this.sendReq();
+
+    this.loading = false;
+
+    if (res.ok) {
+      this.args.onRegisterSucceeded?.();
+    } else {
+      this.password = '';
+      this.passwordConfirmation = '';
+      if (res.status === 404) {
+        this.errorMsg = '404: Not found';
+        this.args.onRegisterFailed?.(this.errorMsg);
+      } else if (res.status === 400) {
+        const json = await res.json();
+        const error = json.errors[0];
+        this.errorMsg = error.title;
+        this.args.onRegisterFailed?.(error);
+      }
     }
+  }
 }
- 

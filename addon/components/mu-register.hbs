@@ -1,16 +1,18 @@
-<div class='feedback-message'>
-  {{#if this.loading}}
-    <span class='loading'>
-      Registering...
-    </span>
-  {{/if}}
-  {{#if this.errorMessage}}
-    <span class='error-message'>
-      {{this.errorMessage}}
-    </span>
-  {{/if}}
-</div>
-<form class='registration-form' {{on "submit" this.register}}>
+{{#if this.showFeedbackMsg}}
+  <div class='feedback-message'>
+    {{#if this.loading}}
+      <span class='loading'>
+        Registering...
+      </span>
+    {{/if}}
+    {{#if this.errorMsg}}
+      <span class='error-message'>
+        {{this.errorMsg}}
+      </span>
+    {{/if}}
+  </div>
+{{/if}}
+<form class='registration-form' {{on 'submit' this.register}}>
   <div class='registration-form-name'>
     <label for='registration-form-name'>
       Name
@@ -51,7 +53,7 @@
       @type='password'
     />
   </div>
-  <button>
+  <button type='submit'>
     Register
   </button>
 </form>
